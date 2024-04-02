@@ -51,4 +51,4 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          scp -i "$(echo "${{ secrets.EC2_PRIVATE_KEY }}")" -r . ubuntu@ec2-13-53-253-173.eu-north-1.compute.amazonaws.com:/home/ubuntu/
+          scp -i "$(echo "${{ secrets.EC2_PRIVATE_KEY }}")" -r . ubuntu@ec2-13-53-253-173.eu-north-1.compute.amazonaws.com:/home/ubuntu/quiz-app-backend
