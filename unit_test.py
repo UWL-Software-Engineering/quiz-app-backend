@@ -8,10 +8,12 @@ class TestApp(unittest.TestCase):
         self.app = app.test_client()
         self.db = client['quizz-application']
         self.users_collection = self.db['users']
+        self.questions_collection = self.db['questions']
         self.users_collection.delete_many({})  # Clear users collection before each test
 
     def tearDown(self):
         self.users_collection.delete_many({})  # Clear users collection after each test
+        self.questions_collection.delete_many({})  # Clear questions collection after each test
 
     def test_index(self):
         response = self.app.get('/')
@@ -58,5 +60,61 @@ class TestApp(unittest.TestCase):
         response = self.app.post('/login', json=new_user)
         self.assertEqual(response.status_code, 401)  # Assuming 401 is returned for invalid credentials
 
+    def test_create_question(self):
+        new_question = {
+            "question": "What is the answer?",
+            "options": ["option A", "option B", "option C", "option D"],
+            "correct_answer": "option A"
+        }
+        response = self.app.post('/questions', json=new_question)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(self.questions_collection.find_one({'question': new_question['question']}))
+
+    def test_create_question_failure_duplicate(self):
+        new_question = {
+            "question": "What is the answer?",
+            "options": ["option A", "option B", "option C", "option D"],
+            "correct_answer": "option A"
+        }
+        # Add the same question first
+        self.app.post('/questions', json=new_question)
+        # Attempt to add the same question again
+        response = self.app.post('/questions', json=new_question)
+        self.assertEqual(response.status_code, 400)
+
+    def test_get_quizz(self):
+        # Add some mock questions to the database
+        mock_questions = [
+            {"question": "Question 1", "options": ["A", "B", "C", "D"], "correct_answer": "A"},
+            {"question": "Question 2", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 3", "options": ["A", "B", "C", "D"], "correct_answer": "A"},
+            {"question": "Question 4", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 5", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 6", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 7", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 8", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 9", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+            {"question": "Question 10", "options": ["A", "B", "C", "D"], "correct_answer": "B"},
+        ]
+        
+        response = self.app.post('/questions', json=mock_questions)
+        
+        # Make a GET request to the endpoint
+        response = self.app.get('/get_quizz')
+        print(response)
+        # Check if the response status code is 200
+        self.assertEqual(response.status_code, 200)
+        
+        # Check if the response contains a list of 10 questions
+        quizz = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(len(quizz), 10)
+        
+        # Check if each question in the quizz does not contain the '_id' field
+        for question in quizz:
+            self.assertNotIn('_id', question)
+
+        # Clean up: Remove mock questions from the database
+        for question in mock_questions:
+            self.questions_collection.delete_one(question)
 if __name__ == '__main__':
     unittest.main()
