@@ -10,6 +10,11 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
+    env:
+      MONGODB_USERNAME: ${{ secrets.MONGODB_USERNAME }}
+      MONGODB_PWD: ${{ secrets.MONGODB_PWD }}
+      CLUSTER_URI: ${{ secrets.CLUSTER_URI }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
