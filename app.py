@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from dotenv import load_dotenv, find_dotenv
 import os
 from pymongo import MongoClient
@@ -6,10 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-
-# connection_string = "mongodb+srv://UWLStudent:UWL123@cluster0.xzxhbrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-
-# client = MongoClient(connection_string)
 
 load_dotenv(find_dotenv())
 
@@ -30,8 +27,10 @@ except Exception as e:
 db = client['quizz-application']
 users_collection = db['users']
 questions_collection = db['questions']
+leaderboard_collection = db['leaderboard']
 
 app = Flask(__name__)
+CORS(app)
 
 # Dummy data for the sake of example
 quizzes = [
@@ -150,6 +149,37 @@ def get_quizz():
         question.pop('_id', None)
     
     return jsonify(random_questions), 200
+
+# Leaderboard endpoint
+@app.route("/add_leaderboard", methods=["POST"])
+def create_leaderboard():
+    data = request.get_json()
+    participant_name = data.get('participant_name')
+    best_score = data.get('best_score')
+
+    if not participant_name or not best_score:
+        return jsonify({'error': 'Participant name and Best score are required'}), 400
+
+    if leaderboard_collection.find_one({'participant_name': participant_name}):
+        query = {'participant_name': participant_name}
+        update = {'$set': {'best_score': best_score}}
+        leaderboard_collection.update_one(query, update)
+        return jsonify({'message': 'Score updated on leaderboard successfully'}), 200
+
+    leaderboard_data = {
+        'participant_name': participant_name,
+        'best_score': best_score
+    }
+
+    leaderboard_collection.insert_one(leaderboard_data)
+
+    return jsonify({'message': 'Leaderboard data created successfully'}), 200
+
+# Retrieve leaderboard data
+@app.route('/leaderboard', methods=['GET'])
+def get_leaderboard():
+    leaderboard_data = list(leaderboard_collection.find({}, {'_id': 0}))
+    return jsonify({'leaderboard': leaderboard_data}), 200
 
 
 if __name__ == '__main__':
