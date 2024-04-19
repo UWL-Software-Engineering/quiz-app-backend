@@ -8,6 +8,9 @@ import random
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
+from logger_config import Logger
+from elasticapm.contrib.flask import ElasticAPM
+
 load_dotenv(find_dotenv())
 
 password = os.environ.get("MONGODB_PWD")
@@ -46,8 +49,13 @@ quizzes = [
     }
 ]
 
+apm = ElasticAPM(app, server_url='http://0.0.0.0:8200', service_name="Quiz-Application", logging=False)
+logger = Logger.get_logger()
+logger.info("APM connected!")
+
 @app.route('/')
 def index():
+    logger.info("APM connected!")
     return "Welcome to the Quiz App!"
 
 @app.route('/quizzes', methods=['GET'])
@@ -183,4 +191,5 @@ def get_leaderboard():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
+

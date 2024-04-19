@@ -23,4 +23,4 @@ junit.xml
 coverage.xml
 .coverage
 tests/integration/temp_images/
-neo4j/data_bk/
+myenv/
