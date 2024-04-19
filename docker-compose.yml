@@ -6,7 +6,7 @@ services:
     volumes:
       - ./.env:/app/.env
     environment:
-      - CLUSTER_URI=mongodb://mongo:27017/quizapp
+      - CLUSTER_URI=mongodb://mongo:27017/quiz-app
       - MONGODB_USERNAME=user
       - MONGODB_PWD=password
       - MONGODB_DATABASE_NAME=quiz-app
